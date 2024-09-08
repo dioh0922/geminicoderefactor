@@ -2,8 +2,9 @@ const form = document.getElementById('callBtn');
 
 // フォームが存在するか確認
 if (form) {
-    // submit イベントのリスナーを追加
+    const vscode = acquireVsCodeApi();
     form.addEventListener('click', (event) => {
-        document.getElementById("result").innerHTML = "test";
+        vscode.postMessage({ type: 'prompt', command: document.getElementById("prompt").value })
+        document.getElementById("result").innerHTML = document.getElementById("prompt").value;
     });
 }

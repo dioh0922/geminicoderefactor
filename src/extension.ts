@@ -1,6 +1,8 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
+import axios from 'axios';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -56,9 +58,6 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider(WebViewProvider.viewType, provider)
   )
-  const commentPrompt = vscode.commands.registerCommand('geminicoderefactor.commentGemini', () => {
-
-  })
 }
 
 // This method is called when your extension is deactivated
@@ -82,7 +81,6 @@ class WebViewProvider implements vscode.WebviewViewProvider{
 		const styleResetUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'reset.css'));
 		const styleVSCodeUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'vscode.css'));
 		const styleMainUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'main.css'));
-
     const nonce = getNonce()
 
 		return `<!DOCTYPE html>
@@ -129,6 +127,24 @@ class WebViewProvider implements vscode.WebviewViewProvider{
 
 		webviewView.webview.onDidReceiveMessage(data => {
 			switch (data.type) {
+        case 'prompt':
+          {
+            const config = vscode.workspace.getConfiguration('myExtension');
+            const customSetting = config.get<string>('customSetting', 'defaultValue');
+            const gemini = new GoogleGenerativeAI(customSetting);
+            const model = gemini.getGenerativeModel({model:'gemini-1.5-flash'});
+            const imputPrompt = data.command
+            const result = ''
+            model.generateContent(imputPrompt).then(res => {
+              const response = res.response
+              const text = response.text()
+              vscode.window.showInformationMessage(text)
+            })
+            .catch(er => {
+              vscode.window.showErrorMessage(er)
+            })
+                      break;
+          }
 				case 'colorSelected':
 					{
 						vscode.window.activeTextEditor?.insertSnippet(new vscode.SnippetString(`#${data.value}`));
