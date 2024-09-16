@@ -26,7 +26,7 @@
     "commands": [
       {
         "command": "geminicoderefactor.helloWorld",
-        "title": "Hello World"
+        "title": "javadocをgeminiで生成"
       },
       {
         "command": "geminicoderefactor.commentGemini",
@@ -34,6 +34,15 @@
         "title": "comment"
       }
     ],
+    "menus":{
+      "editor/context":[
+        {
+          "command": "geminicoderefactor.helloWorld",
+          "when": "editorTextFocus",
+          "group": "navigation"
+        }
+      ]
+    },
     "configuration": {
       "type": "object",
       "title": "gemini Setting",

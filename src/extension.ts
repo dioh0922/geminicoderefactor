@@ -1,58 +1,24 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
-import axios from 'axios';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
 
-  /*
-  let editor = vscode.window.activeTextEditor; // エディタ取得
-  let doc = editor?.document;            // ドキュメント取得
-  let cur_selection = editor?.selection; // 選択範囲取得
-  if(editor?.selection.isEmpty 
-    && doc){         
-    // 選択範囲が空であれば全てを選択範囲にする
-    let startPos = new vscode.Position(0, 0);
-    let endPos = new vscode.Position(doc.lineCount - 1, 10000);
-    cur_selection = new vscode.Selection(startPos, endPos);
-  }
-
-  let text = doc ? doc.getText(cur_selection) : ''; //取得されたテキスト
-
-  */
-
-  /**
-   * ここでテキストを加工します。
-   **/
-
-  /*
-  //エディタ選択範囲にテキストを反映
-  if(editor && cur_selection){
-    editor.edit(edit => {
-      edit.replace(cur_selection, text);
-    });
-  }
-    */
-
-  /*
-  // Use the console to output diagnostic information (console.log) and errors (console.error)
-  // This line of code will only be executed once when your extension is activated
-  console.log('Congratulations, your extension "geminicoderefactor" is now active!');
-
-  // The command has been defined in the package.json file
-  // Now provide the implementation of the command with registerCommand
-  // The commandId parameter must match the command field in package.json
-  const disposable = vscode.commands.registerCommand('geminicoderefactor.helloWorld', () => {
-    // The code you place here will be executed every time your command is executed
-    // Display a message box to the user
-    vscode.window.showInformationMessage('Hello World from geminiCodeRefactor!');
+  let disposable = vscode.commands.registerCommand('geminicoderefactor.helloWorld', () => {
+    const editor = vscode.window.activeTextEditor
+    const doc = editor?.document
+    const selection = editor?.selection
+    if(selection?.isEmpty || !doc){
+      vscode.window.showErrorMessage('選択範囲が空です')
+    }else{
+      callGeminiApi(doc.getText(selection) + '\n上記のコードにjavadocを書いてください。')
+    }
+    //vscode.window.showInformationMessage('Hello World from my extension!');
   });
-
   context.subscriptions.push(disposable);
-  */
 
   const provider = new WebViewProvider(context.extensionUri);
   context.subscriptions.push(
@@ -100,7 +66,6 @@ class WebViewProvider implements vscode.WebviewViewProvider{
 
         <textarea rows="10" id="prompt"></textarea>
         <button id="callBtn" class="add-color-button">Call</button>
-        <textarea rows="10" id="result"></textarea>
 
         <script nonce="${nonce}" src="${scriptUri}"></script>
 			</body>
@@ -129,30 +94,35 @@ class WebViewProvider implements vscode.WebviewViewProvider{
 			switch (data.type) {
         case 'prompt':
           {
-            const config = vscode.workspace.getConfiguration('myExtension');
-            const customSetting = config.get<string>('customSetting', 'defaultValue');
-            const gemini = new GoogleGenerativeAI(customSetting);
-            const model = gemini.getGenerativeModel({model:'gemini-1.5-flash'});
-            const imputPrompt = data.command
-            const result = ''
-            model.generateContent(imputPrompt).then(res => {
-              const response = res.response
-              const text = response.text()
-              vscode.window.showInformationMessage(text)
-            })
-            .catch(er => {
-              vscode.window.showErrorMessage(er)
-            })
-                      break;
+            callGeminiApi(data.command + '\n回答は日本語で返してください。')
+            break
           }
 				case 'colorSelected':
 					{
 						vscode.window.activeTextEditor?.insertSnippet(new vscode.SnippetString(`#${data.value}`));
-						break;
+						break
 					}
 			}
 		});
 	}
+
+}
+
+function callGeminiApi(prompt: string){
+  const config = vscode.workspace.getConfiguration('myExtension');
+  const customSetting = config.get<string>('customSetting', 'defaultValue');
+  const gemini = new GoogleGenerativeAI(customSetting);
+  const model = gemini.getGenerativeModel({model:'gemini-1.5-flash'});
+  const imputPrompt = prompt
+  const result = ''
+  model.generateContent(imputPrompt).then(res => {
+    const response = res.response
+    const text = response.text()
+    vscode.window.showInformationMessage(text)
+  })
+  .catch(er => {
+    vscode.window.showErrorMessage(er)
+  })
 
 }
 
