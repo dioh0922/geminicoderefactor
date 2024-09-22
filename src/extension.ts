@@ -9,15 +9,27 @@ export function activate(context: vscode.ExtensionContext) {
 
   let disposable = vscode.commands.registerCommand('geminicoderefactor.helloWorld', () => {
     const editor = vscode.window.activeTextEditor
-    const doc = editor?.document
-    const selection = editor?.selection
-    if(selection?.isEmpty || !doc){
+    const doc = editor!.document
+    const selection = editor!.selection
+    if(!editor || !doc || selection?.isEmpty){
       vscode.window.showErrorMessage('選択範囲が空です')
     }else{
-      callGeminiApi(doc.getText(selection) + '\n上記のコードにjavadocを書いてください。')
+      const currentCode = doc.getText(selection)
+      callGeminiApi(currentCode + '\n上記のコードにjsDocのスタイルでコメントを書いてください。authorを追加して「GeminiApi generated」と追加してください。回答にはコメント内容のみを含めてください').then((res: any)=> {
+        const responseRegx = new RegExp(/\/\*\*([\s\S]*?)\*\//)
+        const match = res.match(responseRegx)
+        if(match){
+          // コメント部分 /* -- */があれば適用する
+          editor.edit(edit => {
+            edit.replace(selection, match[0] + '\n' + currentCode)
+          })
+
+        }else{
+          vscode.window.showErrorMessage('コメントが見つかりません\n' + res)
+        }
+      })
     }
-    //vscode.window.showInformationMessage('Hello World from my extension!');
-  });
+  })
   context.subscriptions.push(disposable)
 
   const provider = new WebViewProvider(context.extensionUri)
@@ -93,7 +105,9 @@ class WebViewProvider implements vscode.WebviewViewProvider{
 		webviewView.webview.onDidReceiveMessage(data => {
 			switch (data.type) {
 				case 'prompt':
-					callGeminiApi(data.command + '\n回答は日本語で返してください。')
+          const text = callGeminiApi(data.command + '\n回答は日本語で返してください。').then((res: string) => {
+            vscode.window.showInformationMessage(res)
+          })
 					break
         case 'colorSelected':
           vscode.window.activeTextEditor?.insertSnippet(new vscode.SnippetString(`#${data.value}`))
@@ -104,22 +118,19 @@ class WebViewProvider implements vscode.WebviewViewProvider{
 
 }
 
-function callGeminiApi(prompt: string){
+async function callGeminiApi(prompt: string): Promise<string>{
   const config = vscode.workspace.getConfiguration('myExtension')
   const customSetting = config.get<string>('customSetting', 'defaultValue')
   const gemini = new GoogleGenerativeAI(customSetting)
   const model = gemini.getGenerativeModel({model:'gemini-1.5-flash'})
-  const imputPrompt = prompt
-  const result = ''
-  model.generateContent(imputPrompt).then(res => {
-    const response = res.response
-    const text = response.text()
-    vscode.window.showInformationMessage(text)
-  })
-  .catch(er => {
-    vscode.window.showErrorMessage(er)
-  })
-
+  const inputPrompt = prompt
+  let result = ''
+  try{
+    result = (await model.generateContent(inputPrompt)).response.text()
+  }catch(e: any){
+    vscode.window.showErrorMessage(e)
+  }
+  return result
 }
 
 function getNonce() {
