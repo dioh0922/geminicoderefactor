@@ -18,9 +18,9 @@ export function activate(context: vscode.ExtensionContext) {
     }
     //vscode.window.showInformationMessage('Hello World from my extension!');
   });
-  context.subscriptions.push(disposable);
+  context.subscriptions.push(disposable)
 
-  const provider = new WebViewProvider(context.extensionUri);
+  const provider = new WebViewProvider(context.extensionUri)
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider(WebViewProvider.viewType, provider)
   )
@@ -41,12 +41,12 @@ class WebViewProvider implements vscode.WebviewViewProvider{
 	) { }
 
   private _getHtmlForWebview(webview: vscode.Webview) {
-		const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'main.js'));
+		const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'main.js'))
 
 		// Do the same for the stylesheet.
-		const styleResetUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'reset.css'));
-		const styleVSCodeUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'vscode.css'));
-		const styleMainUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'main.css'));
+		const styleResetUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'reset.css'))
+		const styleVSCodeUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'vscode.css'))
+		const styleMainUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'main.css'))
     const nonce = getNonce()
 
 		return `<!DOCTYPE html>
@@ -69,7 +69,7 @@ class WebViewProvider implements vscode.WebviewViewProvider{
 
         <script nonce="${nonce}" src="${scriptUri}"></script>
 			</body>
-			</html>`;
+			</html>`
 	}
 
 	public resolveWebviewView(
@@ -86,33 +86,29 @@ class WebViewProvider implements vscode.WebviewViewProvider{
 			localResourceRoots: [
 				this._extensionUri
 			]
-		};
+		}
 
-		webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
+		webviewView.webview.html = this._getHtmlForWebview(webviewView.webview)
 
 		webviewView.webview.onDidReceiveMessage(data => {
 			switch (data.type) {
-        case 'prompt':
-          {
-            callGeminiApi(data.command + '\n回答は日本語で返してください。')
-            break
-          }
-				case 'colorSelected':
-					{
-						vscode.window.activeTextEditor?.insertSnippet(new vscode.SnippetString(`#${data.value}`));
-						break
-					}
-			}
+				case 'prompt':
+					callGeminiApi(data.command + '\n回答は日本語で返してください。')
+					break
+        case 'colorSelected':
+          vscode.window.activeTextEditor?.insertSnippet(new vscode.SnippetString(`#${data.value}`))
+          break
+      }
 		});
 	}
 
 }
 
 function callGeminiApi(prompt: string){
-  const config = vscode.workspace.getConfiguration('myExtension');
-  const customSetting = config.get<string>('customSetting', 'defaultValue');
-  const gemini = new GoogleGenerativeAI(customSetting);
-  const model = gemini.getGenerativeModel({model:'gemini-1.5-flash'});
+  const config = vscode.workspace.getConfiguration('myExtension')
+  const customSetting = config.get<string>('customSetting', 'defaultValue')
+  const gemini = new GoogleGenerativeAI(customSetting)
+  const model = gemini.getGenerativeModel({model:'gemini-1.5-flash'})
   const imputPrompt = prompt
   const result = ''
   model.generateContent(imputPrompt).then(res => {
@@ -127,10 +123,10 @@ function callGeminiApi(prompt: string){
 }
 
 function getNonce() {
-	let text = '';
-	const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+	let text = ''
+	const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
 	for (let i = 0; i < 32; i++) {
-		text += possible.charAt(Math.floor(Math.random() * possible.length));
+		text += possible.charAt(Math.floor(Math.random() * possible.length))
 	}
-	return text;
+	return text
 }
