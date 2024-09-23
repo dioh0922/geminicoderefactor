@@ -19,14 +19,14 @@
         {
           "type": "webview",
           "id": "geminicoderefactor.comment",
-          "name": "gemini-comment"
+          "name": "gemini-ask"
         }
       ]
     },
     "commands": [
       {
         "command": "geminicoderefactor.helloWorld",
-        "title": "javadocをgeminiで生成"
+        "title": "jsdocをgeminiで生成"
       },
       {
         "command": "geminicoderefactor.commentGemini",
@@ -34,8 +34,8 @@
         "title": "comment"
       }
     ],
-    "menus":{
-      "editor/context":[
+    "menus": {
+      "editor/context": [
         {
           "command": "geminicoderefactor.helloWorld",
           "when": "editorTextFocus",
@@ -76,6 +76,7 @@
   },
   "dependencies": {
     "@google/generative-ai": "^0.17.1",
-    "axios": "^1.7.7"
+    "axios": "^1.7.7",
+    "vsce": "^2.15.0"
   }
 }
