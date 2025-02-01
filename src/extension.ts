@@ -105,9 +105,18 @@ class WebViewProvider implements vscode.WebviewViewProvider{
 		webviewView.webview.onDidReceiveMessage(data => {
 			switch (data.type) {
 				case 'prompt':
-          const text = callGeminiApi(data.command + '\n回答は日本語で返してください。').then((res: string) => {
-            vscode.window.showInformationMessage(res)
-          })
+          const text = callGeminiApi(data.command + '\n回答は日本語で返してください。').then( async(res: string) => {
+
+            const uri = vscode.Uri.parse('untitled:geminiResult.txt');
+            const document = await vscode.workspace.openTextDocument(uri);
+            await vscode.window.showTextDocument(document);
+
+            // 変数の内容を空のファイルに書き込む
+            const edit = new vscode.WorkspaceEdit();
+            edit.insert(uri, new vscode.Position(0, 0), res);
+            await vscode.workspace.applyEdit(edit);
+        });
+
 					break
         case 'colorSelected':
           vscode.window.activeTextEditor?.insertSnippet(new vscode.SnippetString(`#${data.value}`))
@@ -122,7 +131,7 @@ async function callGeminiApi(prompt: string): Promise<string>{
   const config = vscode.workspace.getConfiguration('myExtension')
   const customSetting = config.get<string>('customSetting', 'defaultValue')
   const gemini = new GoogleGenerativeAI(customSetting)
-  const model = gemini.getGenerativeModel({model:'gemini-1.5-flash'})
+  const model = gemini.getGenerativeModel({model:'gemini-1.5-pro'})
   const inputPrompt = prompt
   let result = ''
   try{
